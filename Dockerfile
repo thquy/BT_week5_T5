@@ -1,12 +1,16 @@
-# Sử dụng Maven để build dự án
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+# Stage 1: Build với Maven
+FROM maven:3.9.4-eclipse-temurin-17 AS build
 WORKDIR /app
-COPY . .
+COPY pom.xml .
+COPY src ./src
 RUN mvn clean package -DskipTests
 
-# Sử dụng Tomcat để chạy WAR
-FROM tomcat:9.0.89-jdk17
-COPY --from=build /app/target/BT_C7_T5.war /usr/local/tomcat/webapps/ROOT.war
+# Stage 2: Chạy với Tomcat
+FROM tomcat:9.0-jdk17-temurin
+# Xóa app mặc định ROOT
+RUN rm -rf /usr/local/tomcat/webapps/ROOT
+# Copy WAR từ stage build
+COPY --from=build /app/target/*.war /usr/local/tomcat/webapps/ROOT.war
 
 EXPOSE 8080
 CMD ["catalina.sh", "run"]
